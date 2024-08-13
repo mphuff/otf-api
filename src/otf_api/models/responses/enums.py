@@ -19,7 +19,7 @@ class ChallengeType(int, Enum):
     TwelveDaysOfFitness = 63
     Transformation = 64
     RemixInSix = 65
-    Push = 66
+    Push30 = 66
     BackAtIt = 84
 
 

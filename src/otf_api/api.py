@@ -7,7 +7,11 @@ from math import ceil
 from typing import Any
 
 import aiohttp
+import cattrs
 import requests
+from attrs import has
+from cattrs.gen import make_dict_structure_fn
+from cattrs.strategies import use_class_methods
 from loguru import logger
 from yarl import URL
 
@@ -45,6 +49,12 @@ from otf_api.models import (
     TotalClasses,
     WorkoutList,
 )
+
+c = cattrs.Converter()
+c.register_structure_hook(str | float, lambda v, _: v)
+c.register_structure_hook(datetime, lambda v, _: datetime.fromisoformat(v))
+c.register_structure_hook_factory(has, lambda cl: make_dict_structure_fn(cl, c, _cattrs_use_alias=True))
+use_class_methods(c, "_structure", "_unstructure")
 
 
 class AlreadyBookedError(Exception):
@@ -558,7 +568,9 @@ class Otf:
 
         data = await self._default_request("GET", f"/challenges/v3/member/{self._member_id}/benchmarks", params=params)
 
-        return ChallengeTrackerDetailList(details=data["Dto"])
+        retval = c.structure({"details": data["Dto"]}, ChallengeTrackerDetailList)
+        return retval
+        # return ChallengeTrackerDetailList(details=data["Dto"])
 
     async def get_challenge_tracker_participation(self, challenge_type_id: ChallengeType) -> typing.Any:
         """Get the member's participation in a challenge.
@@ -943,7 +955,7 @@ class Otf:
         """
         data = await self._default_request("GET", f"/member/members/{self._member_uuid}/body-composition")
 
-        return BodyCompositionList(data=data["data"])
+        return c.structure(data, BodyCompositionList)
 
 
 def active_time_to_data_points(active_time: int) -> float:

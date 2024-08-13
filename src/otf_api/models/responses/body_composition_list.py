@@ -1,9 +1,12 @@
-import inspect
 from datetime import datetime
 from enum import Enum
 
+import cattrs
 import pint
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from attr import asdict
+from attrs import define, field, fields, has
+from cattrs.gen import make_dict_structure_fn
+from cattrs.strategies._class_methods import use_class_methods
 
 ureg = pint.UnitRegistry()
 
@@ -98,158 +101,170 @@ def get_body_fat_percent_dividers_female(age: int) -> list[float]:
             return [0.0, 0.0, 0.0, 0.0]
 
 
-class LeanBodyMass(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    left_arm: float = Field(..., alias="lbmOfLeftArm")
-    left_leg: float = Field(..., alias="lbmOfLeftLeg")
-    right_arm: float = Field(..., alias="lbmOfRightArm")
-    right_leg: float = Field(..., alias="lbmOfRightLeg")
-    trunk: float = Field(..., alias="lbmOfTrunk")
+@define
+class LeanBodyMass:
+    left_arm: float = field(alias="lbmOfLeftArm")
+    left_leg: float = field(alias="lbmOfLeftLeg")
+    right_arm: float = field(alias="lbmOfRightArm")
+    right_leg: float = field(alias="lbmOfRightLeg")
+    trunk: float = field(alias="lbmOfTrunk")
 
 
-class LeanBodyMassPercent(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    left_arm: float = Field(..., alias="lbmPercentOfLeftArm")
-    left_leg: float = Field(..., alias="lbmPercentOfLeftLeg")
-    right_arm: float = Field(..., alias="lbmPercentOfRightArm")
-    right_leg: float = Field(..., alias="lbmPercentOfRightLeg")
-    trunk: float = Field(..., alias="lbmPercentOfTrunk")
+@define
+class LeanBodyMassPercent:
+    left_arm: float = field(alias="lbmPercentOfLeftArm")
+    left_leg: float = field(alias="lbmPercentOfLeftLeg")
+    right_arm: float = field(alias="lbmPercentOfRightArm")
+    right_leg: float = field(alias="lbmPercentOfRightLeg")
+    trunk: float = field(alias="lbmPercentOfTrunk")
 
 
-class BodyFatMass(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    control: float = Field(..., alias="bfmControl")
-    left_arm: float = Field(..., alias="bfmOfLeftArm")
-    left_leg: float = Field(..., alias="bfmOfLeftLeg")
-    right_arm: float = Field(..., alias="bfmOfRightArm")
-    right_leg: float = Field(..., alias="bfmOfRightLeg")
-    trunk: float = Field(..., alias="bfmOfTrunk")
+@define
+class BodyFatMass:
+    control: float = field(alias="bfmControl")
+    left_arm: float = field(alias="bfmOfLeftArm")
+    left_leg: float = field(alias="bfmOfLeftLeg")
+    right_arm: float = field(alias="bfmOfRightArm")
+    right_leg: float = field(alias="bfmOfRightLeg")
+    trunk: float = field(alias="bfmOfTrunk")
 
 
-class BodyFatMassPercent(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    left_arm: float = Field(..., alias="bfmPercentOfLeftArm")
-    left_leg: float = Field(..., alias="bfmPercentOfLeftLeg")
-    right_arm: float = Field(..., alias="bfmPercentOfRightArm")
-    right_leg: float = Field(..., alias="bfmPercentOfRightLeg")
-    trunk: float = Field(..., alias="bfmPercentOfTrunk")
+@define
+class BodyFatMassPercent:
+    left_arm: float = field(alias="bfmPercentOfLeftArm")
+    left_leg: float = field(alias="bfmPercentOfLeftLeg")
+    right_arm: float = field(alias="bfmPercentOfRightArm")
+    right_leg: float = field(alias="bfmPercentOfRightLeg")
+    trunk: float = field(alias="bfmPercentOfTrunk")
 
 
-class TotalBodyWeight(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    right_arm: float = Field(..., alias="tbwOfRightArm")
-    left_arm: float = Field(..., alias="tbwOfLeftArm")
-    trunk: float = Field(..., alias="tbwOfTrunk")
-    right_leg: float = Field(..., alias="tbwOfRightLeg")
-    left_leg: float = Field(..., alias="tbwOfLeftLeg")
+@define
+class TotalBodyWeight:
+    right_arm: float = field(alias="tbwOfRightArm")
+    left_arm: float = field(alias="tbwOfLeftArm")
+    trunk: float = field(alias="tbwOfTrunk")
+    right_leg: float = field(alias="tbwOfRightLeg")
+    left_leg: float = field(alias="tbwOfLeftLeg")
 
 
-class IntraCellularWater(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    right_arm: float = Field(..., alias="icwOfRightArm")
-    left_arm: float = Field(..., alias="icwOfLeftArm")
-    trunk: float = Field(..., alias="icwOfTrunk")
-    right_leg: float = Field(..., alias="icwOfRightLeg")
-    left_leg: float = Field(..., alias="icwOfLeftLeg")
+@define
+class IntraCellularWater:
+    right_arm: float = field(alias="icwOfRightArm")
+    left_arm: float = field(alias="icwOfLeftArm")
+    trunk: float = field(alias="icwOfTrunk")
+    right_leg: float = field(alias="icwOfRightLeg")
+    left_leg: float = field(alias="icwOfLeftLeg")
 
 
-class ExtraCellularWater(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    right_arm: float = Field(..., alias="ecwOfRightArm")
-    left_arm: float = Field(..., alias="ecwOfLeftArm")
-    trunk: float = Field(..., alias="ecwOfTrunk")
-    right_leg: float = Field(..., alias="ecwOfRightLeg")
-    left_leg: float = Field(..., alias="ecwOfLeftLeg")
+@define
+class ExtraCellularWater:
+    right_arm: float = field(alias="ecwOfRightArm")
+    left_arm: float = field(alias="ecwOfLeftArm")
+    trunk: float = field(alias="ecwOfTrunk")
+    right_leg: float = field(alias="ecwOfRightLeg")
+    left_leg: float = field(alias="ecwOfLeftLeg")
 
 
-class ExtraCellularWaterOverTotalBodyWater(BaseModel):
-    model_config: ConfigDict = ConfigDict(extra="ignore")
-    right_arm: float = Field(..., alias="ecwOverTBWOfRightArm")
-    left_arm: float = Field(..., alias="ecwOverTBWOfLeftArm")
-    trunk: float = Field(..., alias="ecwOverTBWOfTrunk")
-    right_leg: float = Field(..., alias="ecwOverTBWOfRightLeg")
-    left_leg: float = Field(..., alias="ecwOverTBWOfLeftLeg")
+@define()
+class ExtraCellularWaterOverTotalBodyWater:
+    right_arm: float = field(alias="ecwOverTBWOfRightArm")
+    left_arm: float = field(alias="ecwOverTBWOfLeftArm")
+    trunk: float = field(alias="ecwOverTBWOfTrunk")
+    right_leg: float = field(alias="ecwOverTBWOfRightLeg")
+    left_leg: float = field(alias="ecwOverTBWOfLeftLeg")
 
 
-class BodyCompositionData(BaseModel):
-    member_uuid: str = Field(..., alias="memberUUId")
-    member_id: str = Field(..., alias="memberId")
-    scan_result_uuid: str = Field(..., alias="scanResultUUId")
-    inbody_id: str = Field(..., alias="id", exclude=True, description="InBody ID, same as email address")
+@define
+class BodyCompositionData:
+    member_uuid: str = field(alias="memberUUId")
+    member_id: str = field(alias="memberId")
+    scan_result_uuid: str = field(alias="scanResultUUId")
+    inbody_id: str = field(alias="id", metadata={"description": "InBody ID, same as email address"})
     email: str
-    height: str = Field(..., description="Height in cm")
+    height: str = field(metadata={"description": "Height in cm"})
     gender: Gender
     age: int
-    scan_datetime: datetime = Field(..., alias="testDatetime")
-    provided_weight: float = Field(
-        ..., alias="weight", description="Weight in pounds, provided by member at time of scan"
+    scan_datetime: datetime = field(alias="testDatetime")
+    provided_weight: float = field(
+        alias="weight", metadata={"description": "Weight in pounds, provided by member at time of scan"}
     )
 
     lean_body_mass_details: LeanBodyMass
     lean_body_mass_percent_details: LeanBodyMassPercent
 
-    total_body_weight: float = Field(..., alias="tbw", description="Total body weight in pounds, based on scan results")
-    dry_lean_mass: float = Field(..., alias="dlm")
-    body_fat_mass: float = Field(..., alias="bfm")
-    lean_body_mass: float = Field(..., alias="lbm")
-    skeletal_muscle_mass: float = Field(..., alias="smm")
-    body_mass_index: float = Field(..., alias="bmi")
-    percent_body_fat: float = Field(..., alias="pbf")
-    basal_metabolic_rate: float = Field(..., alias="bmr")
-    in_body_type: str = Field(..., alias="inBodyType")
+    total_body_weight: float = field(
+        alias="tbw", metadata={"description": "Total body weight in pounds, based on scan results"}
+    )
+    dry_lean_mass: float = field(alias="dlm")
+    body_fat_mass: float = field(alias="bfm")
+    lean_body_mass: float = field(alias="lbm")
+    skeletal_muscle_mass: float = field(alias="smm")
+    body_mass_index: float = field(alias="bmi")
+    percent_body_fat: float = field(alias="pbf")
+    basal_metabolic_rate: float = field(alias="bmr")
+    in_body_type: str = field(alias="inBodyType")
 
-    body_fat_mass: float = Field(..., alias="bfm")
-    skeletal_muscle_mass: float = Field(..., alias="smm")
+    body_fat_mass: float = field(alias="bfm")
+    skeletal_muscle_mass: float = field(alias="smm")
 
     # excluded because they are only useful for end result of calculations
-    body_fat_mass_dividers: list[float] = Field(..., alias="bfmGraphScale", exclude=True)
-    body_fat_mass_plot_point: float = Field(..., alias="pfatnew", exclude=True)
-    skeletal_muscle_mass_dividers: list[float] = Field(..., alias="smmGraphScale", exclude=True)
-    skeletal_muscle_mass_plot_point: float = Field(..., alias="psmm", exclude=True)
-    weight_dividers: list[float] = Field(..., alias="wtGraphScale", exclude=True)
-    weight_plot_point: float = Field(..., alias="pwt", exclude=True)
+    body_fat_mass_dividers: list[float] = field(alias="bfmGraphScale", metadata={"exclude": True})
+    body_fat_mass_plot_point: float = field(alias="pfatnew", metadata={"exclude": True})
+    skeletal_muscle_mass_dividers: list[float] = field(alias="smmGraphScale", metadata={"exclude": True})
+    skeletal_muscle_mass_plot_point: float = field(alias="psmm", metadata={"exclude": True})
+    weight_dividers: list[float] = field(alias="wtGraphScale", metadata={"exclude": True})
+    weight_plot_point: float = field(alias="pwt", metadata={"exclude": True})
 
     # excluded due to 0 values
-    body_fat_mass_details: BodyFatMass = Field(..., exclude=True)
-    body_fat_mass_percent_details: BodyFatMassPercent = Field(..., exclude=True)
-    total_body_weight_details: TotalBodyWeight = Field(..., exclude=True)
-    intra_cellular_water_details: IntraCellularWater = Field(..., exclude=True)
-    extra_cellular_water_details: ExtraCellularWater = Field(..., exclude=True)
-    extra_cellular_water_over_total_body_water_details: ExtraCellularWaterOverTotalBodyWater = Field(..., exclude=True)
-    visceral_fat_level: float = Field(..., alias="vfl", exclude=True)
-    visceral_fat_area: float = Field(..., alias="vfa", exclude=True)
-    body_comp_measurement: float = Field(..., alias="bcm", exclude=True)
-    total_body_weight_over_lean_body_mass: float = Field(..., alias="tbwOverLBM", exclude=True)
-    intracellular_water: float = Field(..., alias="icw", exclude=True)
-    extracellular_water: float = Field(..., alias="ecw", exclude=True)
-    lean_body_mass_control: float = Field(..., alias="lbmControl", exclude=True)
+    body_fat_mass_details: BodyFatMass = field(metadata={"exclude": True})
+    body_fat_mass_percent_details: BodyFatMassPercent = field(metadata={"exclude": True})
+    total_body_weight_details: TotalBodyWeight = field(metadata={"exclude": True})
+    intra_cellular_water_details: IntraCellularWater = field(metadata={"exclude": True})
+    extra_cellular_water_details: ExtraCellularWater = field(metadata={"exclude": True})
+    extra_cellular_water_over_total_body_water_details: ExtraCellularWaterOverTotalBodyWater = field(
+        alias="ecwOverTBW", metadata={"exclude": True}
+    )
+    visceral_fat_level: float = field(alias="vfl", metadata={"exclude": True})
+    visceral_fat_area: float = field(alias="vfa", metadata={"exclude": True})
+    body_comp_measurement: float = field(alias="bcm", metadata={"exclude": True})
+    total_body_weight_over_lean_body_mass: float = field(alias="tbwOverLBM")
+    intracellular_water: float = field(alias="icw", metadata={"exclude": True})
+    extracellular_water: float = field(alias="ecw", metadata={"exclude": True})
+    lean_body_mass_control: float = field(alias="lbmControl", metadata={"exclude": True})
 
-    def __init__(self, **data):
-        # populate child models
-        child_model_dict = {
-            k: v.annotation
-            for k, v in self.model_fields.items()
-            if inspect.isclass(v.annotation) and issubclass(v.annotation, BaseModel)
-        }
-        for k, v in child_model_dict.items():
-            data[k] = v(**data)
+    def _unstructure(self):
+        data = asdict(self)
 
-        super().__init__(**data)
+        for f in fields(type(self)):
+            if f.metadata.get("exclude"):
+                data.pop(f.name, None)
 
-    @field_validator("member_id", mode="before")
+        return data
+
     @classmethod
-    def int_to_str(cls, v: int):
-        return str(v)
+    def _structure(cls, data: dict):
+        c = cattrs.Converter()
+        c.register_structure_hook(datetime, lambda v, _: datetime.fromisoformat(v))
+        c.register_structure_hook_factory(has, lambda cl: make_dict_structure_fn(cl, c, _cattrs_use_alias=True))
+        use_class_methods(c, "_structure", "_unstructure")
 
-    @field_validator("skeletal_muscle_mass_dividers", "weight_dividers", "body_fat_mass_dividers", mode="before")
-    @classmethod
-    def convert_dividers_to_float_list(cls, v: str):
-        return [float(i) for i in v.split(";")]
+        for f in fields(cls):
+            if has(f.type):
+                sub_data = c.structure(data, f.type)
+                data[f.alias] = sub_data
+                for k in fields(f.type):
+                    data.pop(k.alias, None)
+            elif f.alias in ["wtGraphScale", "smmGraphScale", "bfmGraphScale"]:
+                data[f.alias] = [float(i) for i in data[f.alias].split(";")]
+            elif f.alias == "tbw":
+                val = data.pop(f.alias, None)
+                data[f.alias] = ureg.Quantity(val, ureg.kilogram).to(ureg.pound).magnitude
+            elif f.alias == "member_id":
+                data[f.alias] = str(data.pop(f.alias))
 
-    @field_validator("total_body_weight", mode="before")
-    @classmethod
-    def convert_body_weight_from_kg_to_pounds(cls, v: float):
-        return ureg.Quantity(v, ureg.kilogram).to(ureg.pound).magnitude
+        known_data = {k: v for k, v in data.items() if k in [f.alias for f in fields(cls)]}
+
+        return cls(**known_data)
 
     @property
     def body_fat_mass_relative_descriptor(self) -> AverageType:
@@ -300,5 +315,6 @@ class BodyCompositionData(BaseModel):
         )
 
 
-class BodyCompositionList(BaseModel):
+@define
+class BodyCompositionList:
     data: list[BodyCompositionData]

@@ -1,8 +1,13 @@
 import inspect
 import typing
+from datetime import datetime
 from enum import Enum
+from logging import getLogger
 from typing import Any, ClassVar, TypeVar
 
+import attrs
+import cattrs
+import cattrs.strategies
 from box import Box
 from inflection import humanize
 from pydantic import BaseModel, ConfigDict
@@ -14,6 +19,45 @@ if typing.TYPE_CHECKING:
     from pydantic.main import IncEx
 
 T = TypeVar("T", bound="OtfItemBase")
+converter = cattrs.Converter()
+converter.register_structure_hook(datetime, lambda v, _: datetime.fromisoformat(v))
+converter.register_structure_hook_factory(
+    attrs.has, lambda cl: cattrs.gen.make_dict_structure_fn(cl, converter, _cattrs_use_alias=True)
+)
+cattrs.strategies.use_class_methods(converter, "_structure", "_unstructure")
+
+logger = getLogger(__name__)
+
+
+class AttrsMixin:
+    _attrs_converter: ClassVar[cattrs.Converter] = converter
+
+    def _unstructure(self):
+        data = attrs.asdict(self)
+
+        for f in attrs.fields(type(self)):
+            if f.metadata.get("exclude"):
+                data.pop(f.name, None)
+
+        return data
+
+    @classmethod
+    def _structure(cls, data: dict):
+        for f in attrs.fields(cls):
+            if attrs.has(f.type):
+                sub_data = cls._attrs_converter.structure(data, f.type)
+                data[f.alias] = sub_data
+                for k in attrs.fields(f.type):
+                    data.pop(k.alias, None)
+            elif f.alias == "member_id":
+                data[f.alias] = str(data.pop(f.alias))
+
+        known_data = {k: v for k, v in data.items() if k in [f.alias for f in attrs.fields(cls)]}
+        unknown_data = {k: v for k, v in data.items() if k not in known_data}
+
+        logger.debug(f"Unknown data for {cls.__name__}: {unknown_data}")
+
+        return cls(**known_data)
 
 
 class BetterDumperMixin:

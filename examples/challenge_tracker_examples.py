@@ -1,15 +1,25 @@
 import asyncio
+import json
 import os
 
+import stackprinter
+from attr import asdict
 from otf_api import Otf
+from otf_api.api import c
 from otf_api.models.responses import ChallengeType, EquipmentType
+
+stackprinter.set_excepthook(style="darkbg2")  # for jupyter notebooks try style='lightbg'
 
 USERNAME = os.getenv("OTF_EMAIL")
 PASSWORD = os.getenv("OTF_PASSWORD")
+DEVICE_KEY = os.getenv("OTF_DEVICE_KEY")
 
 
 async def main():
-    otf = Otf(USERNAME, PASSWORD)
+    otf = Otf(USERNAME, PASSWORD, device_key=DEVICE_KEY)
+
+    body_comp = await otf.get_body_composition_list()
+    print(json.dumps(c.unstructure(body_comp.data[0]), indent=4))
 
     # challenge tracker content is an overview of the challenges OTF runs
     # and your participation in them
@@ -53,7 +63,7 @@ async def main():
     # challenge tracker details are detailed information about specific challenges
     # this endpoint takes an equipment type and a challenge type as arguments
     tread_challenge_details = await otf.get_challenge_tracker_detail(EquipmentType.Treadmill, ChallengeType.Other)
-    print(tread_challenge_details.details[0].model_dump_json(indent=4))
+    print(json.dumps(asdict(tread_challenge_details.details[0]), indent=4, default=str))
 
     """
     {
