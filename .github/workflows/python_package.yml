@@ -8,9 +8,11 @@ on:
 
 jobs:
   build-pypi-dists:
-    name: Build Python package
+    name: Build Python package & OpenAPI schema
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -48,11 +50,21 @@ jobs:
           name: pypi-dists
           path: "./dist"
 
-      - name: Publish schema artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload OpenAPI YAML
+        uses: actions/upload-release-asset@v1
         with:
-          name: openapi-schema
-          path: "./schema"
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./schema/openapi.yaml
+          asset_name: openapi.yaml
+          asset_content_type: application/x-yaml
+
+      - name: Upload OpenAPI JSON
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./schema/openapi.json
+          asset_name: openapi.json
+          asset_content_type: application/json
 
   publish-pypi-dists:
     name: Publish to PyPI
