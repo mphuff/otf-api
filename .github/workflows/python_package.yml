@@ -50,21 +50,27 @@ jobs:
           name: pypi-dists
           path: "./dist"
 
-      - name: Upload OpenAPI YAML
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./schema/openapi.yaml
-          asset_name: openapi.yaml
-          asset_content_type: application/x-yaml
+      - name: Get release upload URL
+        id: get_upload_url
+        run: |
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.id')
+          UPLOAD_URL=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID --jq '.upload_url' | sed 's/{?name,label}//')
+          echo "upload_url=$UPLOAD_URL" >> $GITHUB_OUTPUT
 
-      - name: Upload OpenAPI JSON
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./schema/openapi.json
-          asset_name: openapi.json
-          asset_content_type: application/json
+      - name: Upload OpenAPI Schema Files
+        run: |
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.id')
+          UPLOAD_URL=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID --jq '.upload_url' | sed 's/{?name,label}//')
+          
+          # Upload YAML file
+          gh api --method POST "$UPLOAD_URL?name=openapi.yaml" \
+            --header "Content-Type: application/x-yaml" \
+            --input ./schema/openapi.yaml
+          
+          # Upload JSON file
+          gh api --method POST "$UPLOAD_URL?name=openapi.json" \
+            --header "Content-Type: application/json" \
+            --input ./schema/openapi.json
 
   publish-pypi-dists:
     name: Publish to PyPI
