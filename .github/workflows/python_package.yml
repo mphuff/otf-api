@@ -1,8 +1,9 @@
 name: Publish Python package
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
@@ -49,21 +50,25 @@ jobs:
           name: pypi-dists
           path: "./dist"
 
-      - name: Upload OpenAPI YAML
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./schema/openapi.yaml
-          asset_name: openapi.yaml
-          asset_content_type: application/x-yaml
-
-      - name: Upload OpenAPI JSON
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./schema/openapi.json
-          asset_name: openapi.json
-          asset_content_type: application/json
+      - name: Wait for release and upload schema
+        run: |
+          # Wait a moment for the release to be created
+          sleep 10
+          
+          # Get the release upload URL
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} --jq '.id')
+          UPLOAD_URL=$(gh api repos/${{ github.repository }}/releases/$RELEASE_ID --jq '.upload_url' | sed 's/{?name,label}//')
+          
+          # Upload both files
+          gh api --method POST "$UPLOAD_URL?name=openapi.yaml" \
+            --header "Content-Type: application/x-yaml" \
+            --input ./schema/openapi.yaml
+          
+          gh api --method POST "$UPLOAD_URL?name=openapi.json" \
+            --header "Content-Type: application/json" \
+            --input ./schema/openapi.json
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   publish-pypi-dists:
     name: Publish to PyPI
